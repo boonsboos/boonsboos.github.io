@@ -1,0 +1,38 @@
+:root {
+    background-color: #222222;
+    color: white;
+    font-family: 'Roboto Mono', monospace;
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+div {
+    display: flex;
+    align-self: center;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.horLine {
+    background-color: white;
+    width: 100px;
+    height: 2px;
+}
+
+a:link, a:visited {
+    color: #45A88E;
+    font-weight: bold;
+}
+
+footer > * {
+    color: #777;
+}
+
+footer {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+}
