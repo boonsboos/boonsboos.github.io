@@ -58,10 +58,21 @@ code {
         align-items: center;
         align-self: center;
         justify-content: center;
+        max-width: 95%;
     }
 }
 
-@media screen and (min-width: 600px){
+@media screen and (max-width: 900px){
+    .postcard {
+        display: flex;
+        align-items: center;
+        align-self: center;
+        justify-content: center;
+        max-width: 80%;
+    }
+}
+
+@media screen and (min-width: 900px){
     .postcard {
         display: flex;
         align-items: center;
