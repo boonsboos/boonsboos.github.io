@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta property="og:title" content="How I made a programming language using JSON and Rust">
+        <meta property="og:description" content="<some interesting stuff here>">
+        <link rel="stylesheet" href="../style.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
+        <title>boonsboos.nl</title>
+    </head>    
+    
+    <body>
+        <div>
+            <h1>boonsblog</h1>
+            <span class="horLine"></span>
+        </div>
+        <div>
+            <h3>the blog</h3>
+        </div>
+
+        <div>
+            <nav>
+                <a href="../index.html">Home</a>
+                -
+                <a href="../blog.html" style="font-weight: 700;">Blog</a>
+                -
+                <a href="https://github.com/boonsboos">GitHub</a>
+            </nav>
+        </div>
+        
+        <div style="display:flex;">
+            <div class="postcard">
+                <h2>How I made a programming language using JSON and Rust (part 1)</h2>
+                <p>JSON is not a programming language. That much should be clear from the beginning. Most, if not all uses of the format are for storing and sending data over the interwebs using API requests and WebSocket and what not. But I had the silly idea to go out of my way to implement a sort of LISP dialect, or whatever the project will end up becoming in the end.</p>
+                <p><strong>Note</strong>: I am not a LISP user and as such, most of the syntax will be based around what I have seen floating around in chatrooms and on forums.</p>
+                
+                <h3 id="the-idea">The idea</h3>
+                <p>While playing around with JavaScript, I for a second remembered that JSON is called <em>JavaScript Object</em> Notation. Then I had the genius thought that maybe JSON is used for its internal AST representation. Perhaps it does, I did not look far and wide enough for evidence for this, and it is not important for the rest of this post.</p>
+                <p>What I did realise is that if it <em>is</em> used for AST in JavaScript, I too can use it AST for my own language.</p>
+                <p>Except, I did not want to write another lexer and parser and put everything into a nice data structure so I can then convert it to JSON and so on. Parsers are pain if you keep finding yourself having to write them. So instead, I thought: &quot;Why not use JSON as the syntax? There are tons of good JSON libraries out there!&quot;. And because I was feeling a particular itch for Rust that just had to be scratched, I went to <a href="https://crates.io">crates.io</a> to look for a JSON library.</p>
+                <p>At the time of writing, there are about 6819 packages tagged with &quot;json&quot;. After scrolling through the first page and clicking on a couple documentation pages, I found the perfect match. The one I chose to use is fittingly called <code>json</code>, and it can be found <a href="https://crates.io/crates/json">here</a>.</p>
+                <h3 id="basic-introduction">Basic introduction</h3>
+                <p>Okay, you want to know more about how exactly I&#39;m turning JSON input into program output. So far, the only thing that really works is printing values and passing all arguments of a function to another.</p>
+                <p>Here is an example of a basic program that does all of the things just described:
+                
+                <div class="codecard"> <!-- this sucks but using pre is required for indentation-->
+<pre><code class="lang-json" style="background-color: #111">{
+    <span class="hlkeystr">"defn"</span>: [
+        {
+            <span class="hlkeystr">"name"</span>: <span class="hlstr">"bup"</span>,
+            <span class="hlkeystr">"args"</span>: [<span class="hlstr">"str"</span>],
+            <span class="hlkeystr">"body"</span>: [
+                {<span class="hlkeystr">"print"</span>: [<span class="hlstr">"args"</span>, <span class="hlstr">"bup"</span>, <span class="hlstr">"</span><span class="hlspecstr">\n</span><span class="hlstr">"</span>]}
+            ]
+        }
+    ],
+
+    <span class="hlkeystr">"entry"</span>: [
+        {<span class="hlkeystr">"print"</span>: [<span class="hlstr">"hello "</span>, <span class="hlstr">"world</span><span class="hlspecstr">\n</span><span class="hlstr">"</span>]},
+        {<span class="hlkeystr">"bup"</span>  : [<span class="hlstr">"hello"</span>]}
+    ]
+}
+</code></pre>
+                </div>
+                <p>which outputs</p>
+                <code>hello world<br>
+                    hello bup
+                </code>
+                <h2 id="internals">Internals</h2>
+                <p>As might be quite obvious, the entry block is the main program function, and the defn block is where you define your functions. &quot;print&quot; is a function I have hardcoded into the interpreter, it just calls the <code>print!</code> macro on whatever it gets (its arguments are internally defined as &quot;any..&quot; for variadics of whatever type, it conveniently works very good in combination with the JSON library). It also works with numbers and bools. <code>bup</code> takes one string argument and interpolates it where &quot;args&quot; is positioned in the print input.</p>
+                <p>But how does it go from JSON file to output? Quite simple, really. First, we load the file and parse it into the JSON representation of it. The only downside to doing it this way is that there are no line numbers saved whatshowever and thus any runtime error found is not going to be easy to debug. I <del>should</del> will fix this in the future.</p>
+                <p>Then, the <code>defn</code> block is scanned for function definitions. If there are none or there is no defn block, it skips this step automatically.</p>
+                <p>Next, we look for the <code>entry</code> object, and if it is found, loop over all the children. Every function call should be contained within its own object, with just one key and value - keepin&#39; it nice and LISP-y in here.</p>
+                <p>From here, we just walk the tree. When a function is encountered that is not a built-in function, it goes to the definition in the <code>defn</code> block and loops over all the children in the <code>body</code> block. In other words, functions calling each other infinitely are allowed, and will cause a deadlock. I already tried this as soon as I finished function calls, and it is quite funny to look at.</p>
+                
+                <h2 id="end">End of part 1</h2>
+                <p>For now, I am going to focus on finishing argument passing. The language would be at least twice as powerful if it could curry functions together, too. A couple builtin functions will also be added for math operations.</p>
+                <p>The source code can be found on my github <a href="https://github.com/boonsboos/jerry">here</a>.</p>
+
+                <small><small><small>and the interpreter is called <abbr title="it's the only name i could come up with with a j and r">jerry</abbr> btw</small></small></small>
+            </div>
+        </div>
+    </body>
+
+    <footer>
+        <p>Copyright 2023 boons // <a style="color:#777" href="https://github.com/boonsboos/boonsboos.github.io">source</a></p>  
+    </footer>
+</html>
